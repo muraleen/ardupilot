@@ -1,0 +1,4 @@
+<?xml version="1.0"?> 
+<electric_engine name="T-Motor_MN5208">
+	<power unit="WATTS">1020</power>
+</electric_engine>

@@ -146,6 +146,9 @@ public:
         k_param_parachute,
         k_param_arming = 100,
         k_param_parachute_channel,
+        
+        // 101: Deepstall landing mode
+        k_param_land_deepstall,
 
         // 105: Extra parameters
         k_param_fence_retalt = 105,
@@ -327,6 +330,8 @@ public:
         k_param_DataFlash = 253, // Logging Group
 
         // 254,255: reserved
+        
+        
     };
 
     AP_Int16 format_version;
@@ -493,6 +498,7 @@ public:
 #endif
     AP_Int16 gcs_pid_mask;
     AP_Int8 parachute_channel;
+    AP_Int8 land_deepstall;
 
     // RC channels
     RC_Channel rc_1;
