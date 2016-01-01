@@ -1003,7 +1003,15 @@ const AP_Param::Info Plane::var_info[] = {
     GSCALAR(parachute_channel,      "CHUTE_CHAN",  0),
 #endif
 
-    ASCALAR(land_deepstall, "LAND_DEEPSTALL", 0),
+    GSCALAR(land_deepstall, "LAND_DEEPSTALL", 0),
+    GSCALAR(deepstall_hdg, "DEEPSTALL_HDG", 0),
+    GSCALAR(deepstall_elev, "DEEPSTALL_ELEV", 0),
+    GSCALAR(deepstall_Kyr, "DEEPSTALL_KYR", 4),
+    GSCALAR(deepstall_Kp, "DEEPSTALL_KP", 240),
+    GSCALAR(deepstall_Ki, "DEEPSTALL_KI", 80),
+    GSCALAR(deepstall_Kd, "DEEPSTALL_KD", 0),
+    GSCALAR(deepstall_ilimit, "DEEPSTALL_ILIM", 4000),
+    GSCALAR(deepstall_yrlimit, "DEEPSTALL_YLIM", 1),
 
 #if RANGEFINDER_ENABLED == ENABLED
     // @Group: RNGFND

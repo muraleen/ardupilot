@@ -28,6 +28,7 @@ Plane::Plane(void)
     auto_state.takeoff_complete = true;
     auto_state.next_wp_no_crosstrack = true;
     auto_state.no_crosstrack = true;
+    deepstall_control = new DeepStall();
 }
 
 Plane plane;

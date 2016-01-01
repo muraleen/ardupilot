@@ -4,21 +4,21 @@
 class PIDController
 {
 	public:
-		PIDController(double _Kp, double _Ki, double _Kd);
-		void setGains(double _Kp, double _Ki, double _Kd);
-		void setIntegralLimit(double _ilimit);
-		double run(double dt, double error);
+		PIDController(float _Kp, float _Ki, float _Kd);
+		void setGains(float _Kp, float _Ki, float _Kd);
+		void setIntegralLimit(float _ilimit);
+		float run(float dt, float error);
 		
-		static double saturate(double val, double min, double max);
-		static double wrap(double val, double min, double max);
+		static float saturate(float val, float min, float max);
+		static float wrap(float val, float min, float max);
 	
 	private:
-		double integral;
-		double prev_error;
-		double Kp;
-		double Ki;
-		double Kd;
-		double ilimit;
+		float integral;
+		float prev_error;
+		float Kp;
+		float Ki;
+		float Kd;
+		float ilimit;
 };
 
 #endif

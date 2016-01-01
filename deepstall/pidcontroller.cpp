@@ -1,33 +1,33 @@
 #include "pidcontroller.h"
 
-PIDController::PIDController(float _Kp, float _Ki, float _Kd)
+PIDController::PIDController(double _Kp, double _Ki, double _Kd)
 {
 	this->Kp = _Kp;
 	this->Ki = _Ki;
 	this->Kd = _Kd;
-	this->ilimit = 1000;
+	this->ilimt = 1000;
 	this->integral = 0;
 	this->prev_error = 0;
 }
 
-void PIDController::setGains(float _Kp, float _Ki, float _Kd)
+double PIDController::setGains(double _Kp, double _Ki, double _Kd)
 {
 	this->Kp = _Kp;
 	this->Ki = _Ki;
 	this->Kd = _Kd;
 }
 
-void PIDController::setIntegralLimit(float _ilimit)
+void PIDController::setIntegralLimit(double _ilimit)
 {
 	this->ilimit = _ilimit;
 }
 
-float PIDController::run(float dt, float error)
+double PIDController::run(double dt, double error)
 {
 	this->integral += error*dt;
 	this->integral = saturate(this->integral, -this->ilimit, this->ilimit);
 	
-	float output;
+	double output;
 	
 	output = this->Kp*error;
 	output += this->Ki*this->integral;
@@ -38,7 +38,7 @@ float PIDController::run(float dt, float error)
 	return output;
 }
 
-float PIDController::saturate(float val, float min, float max)
+double PIDController::saturate(double val, double min, double max)
 {
 	if (val > max) {
 		return max;
@@ -49,7 +49,7 @@ float PIDController::saturate(float val, float min, float max)
 	}
 }
 
-float PIDController::wrap(float val, float min, float max)
+double PIDController::wrap(double val, double min, double max)
 {
 	while (val > max) {
 		val += (min - max);

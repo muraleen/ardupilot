@@ -2,7 +2,6 @@
 #define DEEPSTALL_H
 
 #include "pidcontroller.h"
-#include <stdint.h>
 
 // Frequency domain analysis suggests that the PID gains should be: 240, 80 0
 // Try a Kyr gain of between 2 and 4 - tune accordingly.
@@ -20,24 +19,23 @@ class DeepStall
 {
 	public:
 		DeepStall();
-		void setTarget(float lat, float lon);
-		void setYRCParams(float _Kyr, float _yrLimit, float Kp, float Ki, float Kd, float ilim);
-		void compute(float track, float yawrate, float lat, float lon);
-		float getRudderNorm();
-		float getElevatorNorm();
+		void setTarget(double lat, double lon);
+		void setYRCParams(double _Kyr, double _yrLimit, double Kp, double Ki, double Kd, double ilim);
+		void compute(double dt, double track, double yawrate, double lat, double, lon);
+		double getRudderNorm();
+		double getElevatorNorm();
 		
-		void setTargetHeading(float hdg);
+		void setTargetHeading(double hdg);
 	
 	private:
 		PIDController *YawRateController;
-		float land_lat;
-		float land_lon;
-		float rCmd;
-		float eCmd;
-		float targetHeading;
-		float Kyr;
-		float yrLimit;
-		uint32_t _last_t;
+		double land_lat;
+		double land_lon;
+		double rCmd;
+		double eCmd;
+		double targetHeading;
+		double Kyr;
+		double yrLimit;
 };
 
 #endif

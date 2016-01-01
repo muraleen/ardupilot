@@ -410,16 +410,36 @@ void Plane::calc_throttle()
  */
 void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 {
-    bool disable_integrator = false;
-    if (control_mode == STABILIZE && rudder_input != 0) {
-        disable_integrator = true;
-    }
-    steering_control.rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
 
-    // add in rudder mixing from roll
-    steering_control.rudder += channel_roll->servo_out * g.kff_rudder_mix;
-    steering_control.rudder += rudder_input;
-    steering_control.rudder = constrain_int16(steering_control.rudder, -4500, 4500);
+    if (g.land_deepstall > 0) {
+    	// Deepstall mode - override with deepstall steering controller
+    	deepstall_control->setTarget(0, 0); // replace with target location lat and lon
+    	deepstall_control->setYRCParams(g.deepstall_Kyr, g.deepstall_yrlimit, g.deepstall_Kp, g.deepstall_Ki, g.deepstall_Kd, g.deepstall_ilimit);
+    	deepstall_control->setTargetHeading(g.deepstall_hdg);
+    	
+    	switch (g.land_deepstall) {
+    	    case 1: // Heading
+    	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
+    	        break;
+    	    case 2: // Ground Course
+    	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
+    	        break;
+    	}
+    	
+        steering_control.rudder = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
+
+    } else {
+        bool disable_integrator = false;
+        if (control_mode == STABILIZE && rudder_input != 0) {
+            disable_integrator = true;
+        }
+        steering_control.rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
+
+        // add in rudder mixing from roll
+        steering_control.rudder += channel_roll->servo_out * g.kff_rudder_mix;
+        steering_control.rudder += rudder_input;
+        steering_control.rudder = constrain_int16(steering_control.rudder, -4500, 4500);
+    }
 }
 
 /*
@@ -862,6 +882,10 @@ void Plane::set_servos(void)
             channel_pitch->radio_out =     elevon.trim2 + (BOOL_TO_SIGN(g.reverse_ch2_elevon) * (ch2 * 500.0f/ SERVO_MAX));
         }
 
+        if (g.land_deepstall > 0) {
+            channel_pitch->servo_out = g.deepstall_elev;
+        }
+
         // push out the PWM values
         if (g.mix_mode == 0) {
             channel_roll->calc_pwm();
@@ -872,52 +896,63 @@ void Plane::set_servos(void)
 #if THROTTLE_OUT == 0
         channel_throttle->servo_out = 0;
 #else
-        // convert 0 to 100% into PWM
-        uint8_t min_throttle = aparm.throttle_min.get();
-        uint8_t max_throttle = aparm.throttle_max.get();
-        if (control_mode == AUTO && flight_stage == AP_SpdHgtControl::FLIGHT_LAND_FINAL) {
-            min_throttle = 0;
-        }
-        if (control_mode == AUTO &&
-            (flight_stage == AP_SpdHgtControl::FLIGHT_TAKEOFF || flight_stage == AP_SpdHgtControl::FLIGHT_LAND_ABORT)) {
-            if(aparm.takeoff_throttle_max != 0) {
-                max_throttle = aparm.takeoff_throttle_max;
-            } else {
-                max_throttle = aparm.throttle_max;
-            }
-        }
-        channel_throttle->servo_out = constrain_int16(channel_throttle->servo_out, 
-                                                      min_throttle,
-                                                      max_throttle);
 
-        if (!hal.util->get_soft_armed()) {
+        if (g.land_deepstall > 0) { // Deepstall landing mode
+            // Set Elevator to param value
+            channel_pitch->calc_pwm();
+        
+            // Cut throttle
             channel_throttle->servo_out = 0;
-            channel_throttle->calc_pwm();                
-        } else if (suppress_throttle()) {
-            // throttle is suppressed in auto mode
-            channel_throttle->servo_out = 0;
-            if (g.throttle_suppress_manual) {
-                // manual pass through of throttle while throttle is suppressed
+            channel_throttle->calc_pwm();
+        } else {
+
+            // convert 0 to 100% into PWM
+            uint8_t min_throttle = aparm.throttle_min.get();
+            uint8_t max_throttle = aparm.throttle_max.get();
+            if (control_mode == AUTO && flight_stage == AP_SpdHgtControl::FLIGHT_LAND_FINAL) {
+                min_throttle = 0;
+            }
+            if (control_mode == AUTO &&
+                (flight_stage == AP_SpdHgtControl::FLIGHT_TAKEOFF || flight_stage == AP_SpdHgtControl::FLIGHT_LAND_ABORT)) {
+                if(aparm.takeoff_throttle_max != 0) {
+                    max_throttle = aparm.takeoff_throttle_max;
+                } else {
+                    max_throttle = aparm.throttle_max;
+                }
+            }
+            channel_throttle->servo_out = constrain_int16(channel_throttle->servo_out, 
+                                                          min_throttle,
+                                                          max_throttle);
+
+            if (!hal.util->get_soft_armed()) {
+                channel_throttle->servo_out = 0;
+                channel_throttle->calc_pwm();                
+            } else if (suppress_throttle()) {
+                // throttle is suppressed in auto mode
+                channel_throttle->servo_out = 0;
+                if (g.throttle_suppress_manual) {
+                    // manual pass through of throttle while throttle is suppressed
+                    channel_throttle->radio_out = channel_throttle->radio_in;
+                } else {
+                    channel_throttle->calc_pwm();                
+                }
+            } else if (g.throttle_passthru_stabilize && 
+                       (control_mode == STABILIZE || 
+                        control_mode == TRAINING ||
+                        control_mode == ACRO ||
+                        control_mode == FLY_BY_WIRE_A ||
+                        control_mode == AUTOTUNE)) {
+                // manual pass through of throttle while in FBWA or
+                // STABILIZE mode with THR_PASS_STAB set
+                channel_throttle->radio_out = channel_throttle->radio_in;
+            } else if (control_mode == GUIDED && 
+                       guided_throttle_passthru) {
+                // manual pass through of throttle while in GUIDED
                 channel_throttle->radio_out = channel_throttle->radio_in;
             } else {
-                channel_throttle->calc_pwm();                
+                // normal throttle calculation based on servo_out
+                channel_throttle->calc_pwm();
             }
-        } else if (g.throttle_passthru_stabilize && 
-                   (control_mode == STABILIZE || 
-                    control_mode == TRAINING ||
-                    control_mode == ACRO ||
-                    control_mode == FLY_BY_WIRE_A ||
-                    control_mode == AUTOTUNE)) {
-            // manual pass through of throttle while in FBWA or
-            // STABILIZE mode with THR_PASS_STAB set
-            channel_throttle->radio_out = channel_throttle->radio_in;
-        } else if (control_mode == GUIDED && 
-                   guided_throttle_passthru) {
-            // manual pass through of throttle while in GUIDED
-            channel_throttle->radio_out = channel_throttle->radio_in;
-        } else {
-            // normal throttle calculation based on servo_out
-            channel_throttle->calc_pwm();
         }
 #endif
     }
