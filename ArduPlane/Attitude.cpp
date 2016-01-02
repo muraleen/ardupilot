@@ -410,7 +410,7 @@ void Plane::calc_throttle()
  */
 void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 {
-    hal.console->printf("%3.2f\t\t%3.2f\n", ((float) gps.ground_course_cd())/100, ((float) ahrs.yaw)*180/M_PI);
+    // hal.console->printf("%3.2f\t\t%3.2f\n", ((float) gps.ground_course_cd())/100, ((float) ahrs.yaw)*180/M_PI);
 
     if (g.land_deepstall > 0) {
     	// Deepstall mode - override with deepstall steering controller
