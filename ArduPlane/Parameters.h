@@ -338,6 +338,9 @@ public:
         k_param_pidNavPitchAltitude, // unused
         k_param_pidWheelSteer, // unused
 
+        k_param_deepstall_lat,
+        k_param_deepstall_lng,
+
         k_param_DataFlash = 253, // Logging Group
 
         // 254,255: reserved
@@ -518,6 +521,9 @@ public:
     AP_Float deepstall_Kd;
     AP_Float deepstall_ilimit;
     AP_Float deepstall_yrlimit;
+    
+    AP_Float deepstall_lat;
+    AP_Float deepstall_lng;
 
     // RC channels
     RC_Channel rc_1;

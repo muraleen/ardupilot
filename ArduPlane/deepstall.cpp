@@ -39,13 +39,19 @@ void DeepStall::compute(float track, float yawrate, float lat, float lon) {
 	}
 	_last_t = tnow;
 
-	// float targetTrack = atan2(land_lat-lat, land_lon-lon);
-	float targetTrack = targetHeading*M_PI/180;
-	// track *= M_PI/180; // Convert to radians (seems to already be in radians)
+	float targetTrack;
+
+	if (lat == 0 || lon == 0) {	
+		targetTrack = targetHeading*M_PI/180;
+	} else {
+		targetTrack = atan2(land_lon-lon, land_lat-lat);
+	}
 	
 	// For testing purposes, a heading hold is used instead of a track hold - the track variable is actually heading
 	
 	rCmd = PIDController::saturate(YawRateController->run(((float) dt)/1000.0, PIDController::saturate(Kyr*PIDController::wrap(targetTrack - track, -M_PI, M_PI), -yrLimit, yrLimit)), -1, 1);
+	
+	// rCmd = PIDController::saturate(YawRateController->run(((float) dt)/1000.0, Kyr*PIDController::wrap(targetTrack - track, -M_PI, M_PI)) ,1, 1);
 	
 	eCmd = 1; // Full pitch up
 }

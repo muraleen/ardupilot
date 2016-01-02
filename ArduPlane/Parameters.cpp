@@ -1012,6 +1012,8 @@ const AP_Param::Info Plane::var_info[] = {
     GSCALAR(deepstall_Kd, "DEEPSTALL_KD", 0),
     GSCALAR(deepstall_ilimit, "DEEPSTALL_ILIM", 4000),
     GSCALAR(deepstall_yrlimit, "DEEPSTALL_YLIM", 1),
+    GSCALAR(deepstall_lat, "DEEPSTALL_LAT", 0),
+    GSCALAR(deepstall_lng, "DEEPSTALL_LNG", 0),
 
 #if RANGEFINDER_ENABLED == ENABLED
     // @Group: RNGFND
