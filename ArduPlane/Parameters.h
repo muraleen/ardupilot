@@ -326,6 +326,12 @@ public:
         k_param_pidNavPitchAltitude, // unused
         k_param_pidWheelSteer, // unused
 
+        k_param_rollctl_en,
+        k_param_rollctl_Kp,
+        k_param_rollctl_Ki,
+        k_param_rollctl_Kd,
+        k_param_rollctl_ilim,
+
         k_param_DataFlash = 253, // Logging Group
 
         // 254,255: reserved
@@ -496,6 +502,12 @@ public:
 #endif
     AP_Int16 gcs_pid_mask;
     AP_Int8 parachute_channel;
+
+    AP_Int8 rollctl_en;
+    AP_Float rollctl_Kp;
+    AP_Float rollctl_Ki;
+    AP_Float rollctl_Kd;
+    AP_Float rollctl_ilim;
 
     // RC channels
     RC_Channel rc_1;

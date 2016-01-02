@@ -108,6 +108,8 @@
 #include <SITL/SITL.h>
 #endif
 
+#include "pidcontroller.h"
+
 /*
   a plane specific arming class
  */
@@ -557,6 +559,9 @@ private:
 #if PARACHUTE == ENABLED
     AP_Parachute parachute {relay};
 #endif
+
+    PIDController *rollCtl;
+    uint32_t _last_t;
 
     // terrain handling
 #if AP_TERRAIN_AVAILABLE

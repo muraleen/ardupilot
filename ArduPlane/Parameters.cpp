@@ -1011,6 +1011,12 @@ const AP_Param::Info Plane::var_info[] = {
     GSCALAR(parachute_channel,      "CHUTE_CHAN",  0),
 #endif
 
+    GSCALAR(rollctl_en,      "ROLLCTL_EN",  0),
+    GSCALAR(rollctl_Kp,      "ROLLCTL_KP",  0),
+    GSCALAR(rollctl_Ki,      "ROLLCTL_KI",  0),
+    GSCALAR(rollctl_Kd,      "ROLLCTL_KD",  0),
+    GSCALAR(rollctl_ilim,      "ROLLCTL_ILIM",  0),
+
 #if RANGEFINDER_ENABLED == ENABLED
     // @Group: RNGFND
     // @Path: ../libraries/AP_RangeFinder/RangeFinder.cpp

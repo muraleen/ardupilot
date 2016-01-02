@@ -410,16 +410,32 @@ void Plane::calc_throttle()
  */
 void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 {
-    bool disable_integrator = false;
-    if (control_mode == STABILIZE && rudder_input != 0) {
-        disable_integrator = true;
-    }
-    steering_control.rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
+    if (g.rollctl_en == 1) {
+        // Custom roll controller
+        
+        uint32_t tnow = AP_HAL::millis();
+	    uint32_t dt = tnow - _last_t;
+	    if (_last_t == 0 || dt > 1000) {
+		    dt = 10;
+	    }
+	    _last_t = tnow;
+        
+        rollCtl->setGains(g.rollctl_Kp, g.rollctl_Ki, g.rollctl_Kd);
+        rollCtl->setIntegralLimit(g.rollctl_ilim);
+        
+        steering_control.rudder = constrain_int16(rollCtl->run(dt, nav_roll_cd - ahrs.roll)*4500, -4500, 4500);
+    } else {
+        bool disable_integrator = false;
+        if (control_mode == STABILIZE && rudder_input != 0) {
+            disable_integrator = true;
+        }
+        steering_control.rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
 
-    // add in rudder mixing from roll
-    steering_control.rudder += channel_roll->servo_out * g.kff_rudder_mix;
-    steering_control.rudder += rudder_input;
-    steering_control.rudder = constrain_int16(steering_control.rudder, -4500, 4500);
+        // add in rudder mixing from roll
+        steering_control.rudder += channel_roll->servo_out * g.kff_rudder_mix;
+        steering_control.rudder += rudder_input;
+        steering_control.rudder = constrain_int16(steering_control.rudder, -4500, 4500);
+   }
 }
 
 /*
