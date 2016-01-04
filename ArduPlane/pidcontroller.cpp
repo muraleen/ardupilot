@@ -22,16 +22,23 @@ void PIDController::setIntegralLimit(float _ilimit)
 	this->ilimit = _ilimit;
 }
 
+void PIDController::resetIntegrator()
+{
+	this->integral = 0;
+}
+
 float PIDController::run(float dt, float error)
 {
+	_pid_info.desired = error;
+
 	this->integral += error*dt;
 	this->integral = saturate(this->integral, -this->ilimit, this->ilimit);
 	
-	float output;
+	_pid_info.P = this->Kp*error;
+	_pid_info.I = this->Ki*this->integral;
+	_pid_info.D = this->Kd*((error - this->prev_error)/dt);
 	
-	output = this->Kp*error;
-	output += this->Ki*this->integral;
-	output += this->Kd*((error - this->prev_error)/dt);
+	float output = _pid_info.P + _pid_info.I + _pid_info.D;
 	
 	this->prev_error = error;
 	

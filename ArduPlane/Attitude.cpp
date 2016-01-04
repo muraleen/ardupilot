@@ -432,6 +432,8 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
         steering_control.rudder = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
 
     } else {
+        deepstall_control->YawRateController->resetIntegrator();
+
         bool disable_integrator = false;
         if (control_mode == STABILIZE && rudder_input != 0) {
             disable_integrator = true;
@@ -885,10 +887,6 @@ void Plane::set_servos(void)
             channel_pitch->radio_out =     elevon.trim2 + (BOOL_TO_SIGN(g.reverse_ch2_elevon) * (ch2 * 500.0f/ SERVO_MAX));
         }
 
-        if (g.land_deepstall > 0) {
-            channel_pitch->servo_out = g.deepstall_elev;
-        }
-
         // push out the PWM values
         if (g.mix_mode == 0) {
             channel_roll->calc_pwm();
@@ -901,8 +899,7 @@ void Plane::set_servos(void)
 #else
 
         if (g.land_deepstall > 0) { // Deepstall landing mode
-            // Set Elevator to param value
-            channel_pitch->calc_pwm();
+            channel_pitch->radio_out = g.deepstall_elev;
         
             // Cut throttle
             channel_throttle->servo_out = 0;

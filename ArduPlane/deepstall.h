@@ -27,9 +27,9 @@ class DeepStall
 		float getElevatorNorm();
 		
 		void setTargetHeading(float hdg);
+		PIDController *YawRateController;
 	
 	private:
-		PIDController *YawRateController;
 		float land_lat;
 		float land_lon;
 		float rCmd;
