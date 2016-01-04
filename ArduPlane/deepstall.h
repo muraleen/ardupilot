@@ -22,12 +22,14 @@ class DeepStall
 		DeepStall();
 		void setTarget(float lat, float lon);
 		void setYRCParams(float _Kyr, float _yrLimit, float Kp, float Ki, float Kd, float ilim);
+		void setTPCParams(float Kp, float Ki, float Kd, float _ilim);
 		void compute(float track, float yawrate, float lat, float lon);
 		float getRudderNorm();
 		float getElevatorNorm();
 		
 		void setTargetHeading(float hdg);
 		PIDController *YawRateController;
+		PIDController *TargetPositionController;
 	
 	private:
 		float land_lat;

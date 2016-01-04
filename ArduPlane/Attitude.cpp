@@ -418,6 +418,8 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
     	deepstall_control->setYRCParams(g.deepstall_Kyr, g.deepstall_yrlimit, g.deepstall_Kp, g.deepstall_Ki, g.deepstall_Kd, g.deepstall_ilimit);
     	deepstall_control->setTargetHeading(g.deepstall_hdg);
     	
+    	deepstall_control->setTPCParams(g.deepstall_pKp, g.deepstall_pKi, g.deepstall_pKd, g.deepstall_pilimit);
+    	
     	switch (g.land_deepstall) {
     	    case 1: // Heading hold
     	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
@@ -433,6 +435,7 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 
     } else {
         deepstall_control->YawRateController->resetIntegrator();
+        deepstall_control->TargetPositionController->resetIntegrator();
 
         bool disable_integrator = false;
         if (control_mode == STABILIZE && rudder_input != 0) {
