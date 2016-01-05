@@ -1005,24 +1005,24 @@ const AP_Param::Info Plane::var_info[] = {
 
     GSCALAR(land_deepstall, "LAND_DEEPSTALL", 0),
     GSCALAR(deepstall_hdg, "DEEPSTALL_HDG", 0),
-    GSCALAR(deepstall_elev, "DEEPSTALL_ELEV", 0),
-    GSCALAR(deepstall_Kyr, "DEEPSTALL_KYR", 4),
-    GSCALAR(deepstall_Kp, "DEEPSTALL_KP", 240),
-    GSCALAR(deepstall_Ki, "DEEPSTALL_KI", 80),
-    GSCALAR(deepstall_Kd, "DEEPSTALL_KD", 0),
-    GSCALAR(deepstall_ilimit, "DEEPSTALL_ILIM", 4000),
-    GSCALAR(deepstall_yrlimit, "DEEPSTALL_YLIM", 1),
+    GSCALAR(deepstall_elev, "DEEPSTALL_ELEV", 1203),
+    GSCALAR(deepstall_Kyr, "DEEPSTALL_KYR", 0.25),
+    GSCALAR(deepstall_Kp, "DEEPSTALL_KP", 6),
+    GSCALAR(deepstall_Ki, "DEEPSTALL_KI", 0.1),
+    GSCALAR(deepstall_Kd, "DEEPSTALL_KD", 8),
+    GSCALAR(deepstall_ilimit, "DEEPSTALL_ILIM", 0.2),
+    GSCALAR(deepstall_yrlimit, "DEEPSTALL_YLIM", 0.25),
     GSCALAR(deepstall_lat, "DEEPSTALL_LAT", 0),
     GSCALAR(deepstall_lng, "DEEPSTALL_LNG", 0),
 
-    GSCALAR(deepstall_pKp, "DEEPSTALL_PKP", 0),
+    GSCALAR(deepstall_pKp, "DEEPSTALL_PKP", 0.02),
     GSCALAR(deepstall_pKi, "DEEPSTALL_PKI", 0),
     GSCALAR(deepstall_pKd, "DEEPSTALL_PKD", 0),
-    GSCALAR(deepstall_pilimit, "DEEPSTALL_PILIM", 0),
+    GSCALAR(deepstall_pilimit, "DEEPSTALL_PILIM", 0.5),
 
-    GSCALAR(deepstall_vd, "DEEPSTALL_VD", 0),
-    GSCALAR(deepstall_ds, "DEEPSTALL_DS", 0),
-    GSCALAR(deepstall_vspeed, "DEEPSTALL_VSPEED", 0),
+    GSCALAR(deepstall_vd, "DEEPSTALL_VD", 8),
+    GSCALAR(deepstall_ds, "DEEPSTALL_DS", 50),
+    GSCALAR(deepstall_vspeed, "DEEPSTALL_VSPEED", -6),
 
 #if RANGEFINDER_ENABLED == ENABLED
     // @Group: RNGFND

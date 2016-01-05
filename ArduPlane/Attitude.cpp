@@ -411,13 +411,17 @@ void Plane::calc_throttle()
 void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 {
 
-    if (g.land_deepstall > 1) {
+    // Prepare for deepstall landing
+    deepstall_control->computeApproachPath(ahrs.wind_estimate(), 50, g.deepstall_ds, g.deepstall_vd, 100, g.deepstall_vspeed, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
+    
+    // Update deepstall parameters
+    deepstall_control->setTarget(g.deepstall_lat, g.deepstall_lng);    
+    deepstall_control->setYRCParams(g.deepstall_Kyr, g.deepstall_yrlimit, g.deepstall_Kp, g.deepstall_Ki, g.deepstall_Kd, g.deepstall_ilimit);
+    deepstall_control->setTargetHeading(g.deepstall_hdg);	
+    deepstall_control->setTPCParams(g.deepstall_pKp, g.deepstall_pKi, g.deepstall_pKd, g.deepstall_pilimit);
+
+    if (g.land_deepstall > 0) {
     	// Deepstall mode - override with deepstall steering controller
-    	deepstall_control->setTarget(g.deepstall_lat, g.deepstall_lng); // replace with target location lat and lon
-    	deepstall_control->setYRCParams(g.deepstall_Kyr, g.deepstall_yrlimit, g.deepstall_Kp, g.deepstall_Ki, g.deepstall_Kd, g.deepstall_ilimit);
-    	deepstall_control->setTargetHeading(g.deepstall_hdg);
-    	
-    	deepstall_control->setTPCParams(g.deepstall_pKp, g.deepstall_pKi, g.deepstall_pKd, g.deepstall_pilimit);
     	
     	switch (g.land_deepstall) {
     	    case 2: // Heading hold
@@ -432,10 +436,9 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
     	
         steering_control.rudder = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
 
-    } else if (g.land_deepstall == 1) {
+    // } else if (g.land_deepstall == 1) {
     
-    // Prepare for deepstall landing
-    // deepstall_control->computeApproachPath(ahrs.wind_estimate(), 50, g.deepstall_ds, g.deepstall_vd, 100, g.deepstall_vspeed, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
+    
         
     } else {
         deepstall_control->YawRateController->resetIntegrator();

@@ -40,14 +40,13 @@ void DeepStall::setTPCParams(float Kp, float Ki, float Kd, float _ilim) {
 	TargetPositionController->setIntegralLimit(_ilim);
 }
 
-void DeepStall::computeApproachPath(Vector3f wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon) {
+void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon) {
 
 	float course = targetHeading*M_PI/180;
 
-	wind.z = 0; // Ignore z component
-
-	// Generate v_d vector
-	Vector3f Vd(v_d*sin(targetHeading), v_d*cos(targetHeading), 0);
+	// Generate v_d and wind vectors
+	Vector3f Vd(v_d*sin(course), v_d*cos(course), 0);
+	Vector3f wind(_wind.y, _wind.x, 0);
 	
 	// Compute effective groundspeed - can be negative, hence can handle backward tracking
 	v_e = (1/v_d)*(Vd * (Vd + wind)); // should essentially do dot(Vd,Vd+wind)/v_d
@@ -73,7 +72,7 @@ void DeepStall::computeApproachPath(Vector3f wind, float loiterRadius, float d_s
 	lat_l = lat_i + loiterRadius*cos(course + dangle)/59.71/1852;
 	lon_l = lon_i + loiterRadius*sin(course + dangle)/59.71/1852;
 	
-	hal.console->printf("%3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", lat_e, lon_e, lat_l, lon_l);
+	// hal.console->printf("%3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", lat_e, lon_e, lat_l, lon_l);
 	
 	// DONE! The three approach waypoints (until switching to the compute function below) are stored in the class. setApproachPath() should copy those into the flight plan and execute the approach
 	
