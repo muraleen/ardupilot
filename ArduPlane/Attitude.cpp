@@ -424,13 +424,13 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
     	// Deepstall mode - override with deepstall steering controller
     	
     	switch (g.land_deepstall) {
-    	    case 2: // Heading hold
+    	    case 1: // Heading hold
     	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
     	        break;
-    	    case 3: // Track hold
+    	    case 2: // Track hold
     	        deepstall_control->compute(((float) gps.ground_course_cd())*M_PI/18000, ahrs.get_gyro().z, 0, 0);
     	        break;
-    	    case 4: // Fly-to point
+    	    case 3: // Fly-to point
     	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z,((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
     	}
     	
@@ -438,8 +438,6 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 
     // } else if (g.land_deepstall == 1) {
     
-    
-        
     } else {
         deepstall_control->YawRateController->resetIntegrator();
         deepstall_control->TargetPositionController->resetIntegrator();

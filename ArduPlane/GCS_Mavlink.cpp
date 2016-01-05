@@ -560,6 +560,19 @@ void Plane::send_pid_tuning(mavlink_channel_t chan)
             return;
         }
     }
+    if (g.gcs_pid_mask & 32) {
+        const DataFlash_Class::PID_Info &pid_info = deepstall_control->TargetPositionController->get_pid_info();
+        mavlink_msg_pid_tuning_send(chan, PID_TUNING_ACCZ, 
+                                    pid_info.desired/100,
+                                    0,
+                                    pid_info.FF,
+                                    pid_info.P,
+                                    pid_info.I,
+                                    pid_info.D);
+        if (!HAVE_PAYLOAD_SPACE(chan, PID_TUNING)) {
+            return;
+        }
+    }
 }
 
 void Plane::send_rangefinder(mavlink_channel_t chan)
