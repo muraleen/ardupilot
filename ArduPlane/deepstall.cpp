@@ -18,6 +18,9 @@ DeepStall::DeepStall() {
 	eCmd = 0;
 	targetHeading = 0;
 	_last_t = 0;
+	v_e = 0;
+	d_predict = 0;
+	loiter_ccw = true;
 }
 
 void DeepStall::setTarget(float lat, float lon) {
@@ -64,10 +67,13 @@ void DeepStall::computeApproachPath(Vector3f wind, float loiterRadius, float d_s
 	float dangle = 3*M_PI/2;
 	if (PIDController::wrap(course - atan2(land_lon-lon, land_lat-lat), -M_PI, M_PI) > 0) {
 		dangle = M_PI/2;
+		loiter_ccw = false; // So, loiter clockwise
 	}
 	
 	lat_l = lat_i + loiterRadius*cos(course + dangle)/59.71/1852;
 	lon_l = lon_i + loiterRadius*sin(course + dangle)/59.71/1852;
+	
+	hal.console->printf("%3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", lat_e, lon_e, lat_l, lon_l);
 	
 	// DONE! The three approach waypoints (until switching to the compute function below) are stored in the class. setApproachPath() should copy those into the flight plan and execute the approach
 	

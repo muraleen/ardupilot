@@ -36,6 +36,7 @@ class DeepStall
 		// Approach parameters
 		float d_predict;
 		float v_e;
+		bool loiter_ccw;
 		// Deepstall entry point
 		float lat_e;
 		float lon_e;

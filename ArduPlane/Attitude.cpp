@@ -410,9 +410,8 @@ void Plane::calc_throttle()
  */
 void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 {
-    // hal.console->printf("%3.2f\t\t%3.2f\n", ((float) gps.ground_course_cd())/100, ((float) ahrs.yaw)*180/M_PI);
 
-    if (g.land_deepstall > 0) {
+    if (g.land_deepstall > 1) {
     	// Deepstall mode - override with deepstall steering controller
     	deepstall_control->setTarget(g.deepstall_lat, g.deepstall_lng); // replace with target location lat and lon
     	deepstall_control->setYRCParams(g.deepstall_Kyr, g.deepstall_yrlimit, g.deepstall_Kp, g.deepstall_Ki, g.deepstall_Kd, g.deepstall_ilimit);
@@ -421,18 +420,23 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
     	deepstall_control->setTPCParams(g.deepstall_pKp, g.deepstall_pKi, g.deepstall_pKd, g.deepstall_pilimit);
     	
     	switch (g.land_deepstall) {
-    	    case 1: // Heading hold
+    	    case 2: // Heading hold
     	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
     	        break;
-    	    case 2: // Track hold
+    	    case 3: // Track hold
     	        deepstall_control->compute(((float) gps.ground_course_cd())*M_PI/18000, ahrs.get_gyro().z, 0, 0);
     	        break;
-    	    case 3: // Fly-to point
+    	    case 4: // Fly-to point
     	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z,((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
     	}
     	
         steering_control.rudder = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
 
+    } else if (g.land_deepstall == 1) {
+    
+    // Prepare for deepstall landing
+    // deepstall_control->computeApproachPath(ahrs.wind_estimate(), 50, g.deepstall_ds, g.deepstall_vd, 100, g.deepstall_vspeed, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
+        
     } else {
         deepstall_control->YawRateController->resetIntegrator();
         deepstall_control->TargetPositionController->resetIntegrator();
