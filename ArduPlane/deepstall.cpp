@@ -37,6 +37,46 @@ void DeepStall::setTPCParams(float Kp, float Ki, float Kd, float _ilim) {
 	TargetPositionController->setIntegralLimit(_ilim);
 }
 
+void DeepStall::computeApproachPath(Vector3f wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon) {
+
+	float course = targetHeading*M_PI/180;
+
+	wind.z = 0; // Ignore z component
+
+	// Generate v_d vector
+	Vector3f Vd(v_d*sin(targetHeading), v_d*cos(targetHeading), 0);
+	
+	// Compute effective groundspeed - can be negative, hence can handle backward tracking
+	v_e = (1/v_d)*(Vd * (Vd + wind)) // should essentially do dot(Vd,Vd+wind)/v_d
+	
+	// Predict deepstall distance (can handle backward tracking! xD)
+	d_predict = v_e*deltah/vspeed;
+	
+	// Compute deepstall entry waypoint
+	lat_e = land_lat + d_predict*cos(course + M_PI)/59.71/1852;
+	lon_e = land_lon + d_predict*sin(course + M_PI)/59.71/1852;
+	
+	// Compute course intercept waypoint
+	lat_i = lat_e + d_s*cos(course + M_PI)/59.71/1852;
+	lon_i = lon_e + d_s*sin(course + M_PI)/59.71/1852;
+	
+	// Compute pre-final loiter center
+	float dangle = 3*M_PI/2;
+	if (PIDController::wrap(course - atan2(land_lon-lon, land_lat-lat), -M_PI, M_PI) > 0) {
+		dangle = M_PI/2;
+	}
+	
+	lat_l = lat_i + loiterRadius*cos(course + dangle)/59.71/1852;
+	lon_l = lon_i + loiterRadius*sin(course + dangle)/59.71/1852;
+	
+	// DONE! The three approach waypoints (until switching to the compute function below) are stored in the class. setApproachPath() should copy those into the flight plan and execute the approach
+	
+}
+
+void DeepStall::setApproachPath() {
+	// FIXME
+}
+
 void DeepStall::compute(float track, float yawrate, float lat, float lon) {
 
 	uint32_t tnow = AP_HAL::millis();

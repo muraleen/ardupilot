@@ -3,18 +3,7 @@
 
 #include "pidcontroller.h"
 #include <stdint.h>
-
-// Frequency domain analysis suggests that the PID gains should be: 240, 80 0
-// Try a Kyr gain of between 2 and 4 - tune accordingly.
-// Kyr should be close to 1/T where T is the unsaturated settling time
-
-// Possible parameters?
-// DPSTL_KP		Proportional gain for yaw rate PID controller
-// DPSTL_KI		Integral gain for ...
-// DPSTL_KD		Derivative gain for ...
-// DPSTL_KYR	Yaw rate multiplier for heading/track control
-// DPSTL_YRLIM	Yaw rate limit
-// DPSTL_ILIM	Integral limit for yaw rate PID controller
+#include <AP_Math/AP_Math.h>
 
 class DeepStall
 {
@@ -26,6 +15,9 @@ class DeepStall
 		void compute(float track, float yawrate, float lat, float lon);
 		float getRudderNorm();
 		float getElevatorNorm();
+		
+		void computeApproachPath(Vector3f wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon);
+		void setApproachPath();
 		
 		void setTargetHeading(float hdg);
 		PIDController *YawRateController;
@@ -40,6 +32,20 @@ class DeepStall
 		float Kyr;
 		float yrLimit;
 		uint32_t _last_t;
+		
+		// Approach parameters
+		float d_predict;
+		float v_e;
+		// Deepstall entry point
+		float lat_e;
+		float lon_e;
+		// Course intercept point
+		float lat_i;
+		float lon_i;
+		// Pre-final loiter
+		float lat_l;
+		float lon_l;
+		
 };
 
 #endif
