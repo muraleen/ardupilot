@@ -156,6 +156,8 @@ public:
         k_param_fence_retalt = 105,
         k_param_fence_autoenable,
         k_param_fence_ret_rally,
+        
+        k_param_deepstall_ds, // entry distance
 
         // 110: Telemetry control
         //
@@ -204,6 +206,9 @@ public:
         k_param_mission, // mission library
         k_param_serial_manager, // serial manager library
         k_param_NavEKF2,  // EKF2
+
+        k_param_deepstall_vd, // airspeed
+        k_param_deepstall_vspeed, // vertical speed
 
         //
         // 150: Navigation parameters
@@ -533,6 +538,10 @@ public:
     AP_Float deepstall_pKi;
     AP_Float deepstall_pKd;
     AP_Float deepstall_pilimit;
+    
+    AP_Float deepstall_vd;
+    AP_Float deepstall_ds;
+    AP_Float deepstall_vspeed;
 
     // RC channels
     RC_Channel rc_1;

@@ -1020,6 +1020,10 @@ const AP_Param::Info Plane::var_info[] = {
     GSCALAR(deepstall_pKd, "DEEPSTALL_PKD", 0),
     GSCALAR(deepstall_pilimit, "DEEPSTALL_PILIM", 0),
 
+    GSCALAR(deepstall_vd, "DEEPSTALL_VD", 0),
+    GSCALAR(deepstall_ds, "DEEPSTALL_DS", 0),
+    GSCALAR(deepstall_vspeed, "DEEPSTALL_VSPEED", 0),
+
 #if RANGEFINDER_ENABLED == ENABLED
     // @Group: RNGFND
     // @Path: ../libraries/AP_RangeFinder/RangeFinder.cpp
