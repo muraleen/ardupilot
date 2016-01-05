@@ -22,6 +22,8 @@ class DeepStall
 		void setTargetHeading(float hdg);
 		PIDController *YawRateController;
 		PIDController *TargetPositionController;
+		
+		float targetTrack;
 	
 	private:
 		float land_lat;

@@ -91,8 +91,6 @@ void DeepStall::compute(float track, float yawrate, float lat, float lon) {
 	}
 	_last_t = tnow;
 
-	float targetTrack;
-
 	if (lat == 0 || lon == 0) {	
 		targetTrack = targetHeading*M_PI/180;
 	} else {
@@ -128,7 +126,7 @@ void DeepStall::compute(float track, float yawrate, float lat, float lon) {
 		
 		targetTrack = PIDController::wrap(course + PIDController::saturate(TargetPositionController->run(((float) dt)/1000.0, d2trk),-M_PI/4,M_PI/4),0,2*M_PI);
 		
-		hal.console->printf("%2.4f \t %3.2f \t %3.2f \n", atan2(land_lon-lon, land_lat-lat), d2trk, targetTrack*180/M_PI);
+		// hal.console->printf("%2.4f \t %3.2f \t %3.2f \n", atan2(land_lon-lon, land_lat-lat), d2trk, targetTrack*180/M_PI);
 	}
 	
 	rCmd = PIDController::saturate(YawRateController->run(((float) dt)/1000.0, PIDController::saturate(Kyr*PIDController::wrap(targetTrack - track, -M_PI, M_PI), -yrLimit, yrLimit)), -1, 1);

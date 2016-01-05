@@ -564,7 +564,7 @@ void Plane::send_pid_tuning(mavlink_channel_t chan)
         const DataFlash_Class::PID_Info &pid_info = deepstall_control->TargetPositionController->get_pid_info();
         mavlink_msg_pid_tuning_send(chan, PID_TUNING_ACCZ, 
                                     pid_info.desired/100,
-                                    0,
+                                    deepstall_control->targetTrack,
                                     pid_info.FF,
                                     pid_info.P,
                                     pid_info.I,
