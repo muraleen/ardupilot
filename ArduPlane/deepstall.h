@@ -13,17 +13,20 @@ class DeepStall
 		void setYRCParams(float _Kyr, float _yrLimit, float Kp, float Ki, float Kd, float ilim);
 		void setTPCParams(float Kp, float Ki, float Kd, float _ilim);
 		void compute(float track, float yawrate, float lat, float lon);
+		void approachAndLand(float track, float yawrate, float lat, float lon);
 		float getRudderNorm();
 		float getElevatorNorm();
 		
 		void computeApproachPath(Vector3f wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon);
-		void setApproachPath();
+		
+		void abort();
 		
 		void setTargetHeading(float hdg);
 		PIDController *YawRateController;
 		PIDController *TargetPositionController;
 		
 		float targetTrack;
+		int stage; // 1 - arc point, 2 - course intercept, 3 - deep stall entry point, 4 - stall
 	
 	private:
 		float land_lat;
@@ -34,6 +37,9 @@ class DeepStall
 		float Kyr;
 		float yrLimit;
 		uint32_t _last_t;
+		
+		float tgt_lat;
+		float tgt_lon;
 		
 		// Approach parameters
 		float d_predict;

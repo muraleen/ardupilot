@@ -21,6 +21,7 @@ DeepStall::DeepStall() {
 	v_e = 0;
 	d_predict = 0;
 	loiter_ccw = true;
+	stage = 1;
 }
 
 void DeepStall::setTarget(float lat, float lon) {
@@ -62,6 +63,7 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	lat_i = lat_e + d_s*cos(course + M_PI)/59.71/1852;
 	lon_i = lon_e + d_s*sin(course + M_PI)/59.71/1852;
 	
+	/* LOITER AND INTERCEPT (not being used at the moment)
 	// Compute pre-final loiter center
 	float dangle = 3*M_PI/2;
 	if (PIDController::wrap(course - atan2(land_lon-lon, land_lat-lat), -M_PI, M_PI) > 0) {
@@ -71,6 +73,10 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	
 	lat_l = lat_i + loiterRadius*cos(course + dangle)/59.71/1852;
 	lon_l = lon_i + loiterRadius*sin(course + dangle)/59.71/1852;
+	*/
+	
+	// ARC INTERSECTION AND INTERCEPT (active)
+	
 	
 	// hal.console->printf("%3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", lat_e, lon_e, lat_l, lon_l);
 	
@@ -78,8 +84,38 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	
 }
 
-void DeepStall::setApproachPath() {
-	// FIXME
+void DeepStall::approachAndLand(float track, float yawrate, float lat, float lon) {
+	
+	if (stage < 4) { // Regular navigation
+		switch (stage) {
+			case 1: // Fly-to entry arc point (lat_l, lon_l)
+				tgt_lat = lat_l;
+				tgt_lon = lon_l;
+				break;
+			case 2: // Fly-to course intercept point (lat_i, lon_i)
+				tgt_lat = lat_i;
+				tgt_lon = lon_i;
+				break;
+			case 3: // Fly-to deepstall entry point (lat_e, lon_e)
+				tgt_lat = lat_e;
+				tgt_lon = lon_e;
+		}
+		
+		// Fly to the target waypoint
+		// FIXME
+		
+		if ((sqrt(pow(lat-land_lat,2) + pow(lon-land_lon,2)) <= d_predict + 5 && stage==3) || (sqrt(pow(lat-tgt_lat,2) + pow(lon-tgt_lon,2)) < 25 && stage<3)) {
+			stage++;
+		}
+	} else {
+		compute(track, yawrate, lat, lon);
+	}
+}
+
+void DeepStall::abort() {
+	YawRateController->resetIntegrator();
+    TargetPositionController->resetIntegrator();
+    stage = 1; // Reset deepstall stage in case of abort
 }
 
 void DeepStall::compute(float track, float yawrate, float lat, float lon) {
