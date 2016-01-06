@@ -78,11 +78,11 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	// ARC INTERSECTION AND INTERCEPT (active)
 	float iangle = atan2(lon_i-lon, lat_i-lat);
 	
-	if (PIDController::wrap(course - iangle, -M_PI, M_PI) < -45) {
+	if (PIDController::wrap(course - iangle, -M_PI, M_PI) < -M_PI/4) {
 		// Left side of the arc
 		lat_l = lat_i + loiterRadius*cos(course + 5*M_PI/4)/59.71/1852;
 		lon_l = lon_i + loiterRadius*sin(course + 5*M_PI/4)/59.71/1852;
-	} else if (PIDController::wrap(course - iangle, -M_PI, M_PI) > 45) {
+	} else if (PIDController::wrap(course - iangle, -M_PI, M_PI) > M_PI/4) {
 		// Right side of the arc
 		lat_l = lat_i + loiterRadius*cos(course + 3*M_PI/4)/59.71/1852;
 		lon_l = lon_i + loiterRadius*sin(course + 3*M_PI/4)/59.71/1852;
@@ -92,7 +92,7 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 		lon_l = lon_i + loiterRadius*sin(iangle + M_PI)/59.71/1852;
 	}
 	
-	// hal.console->printf("%3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", lat_e, lon_e, lat_l, lon_l);
+	// hal.console->printf("%3.2f \t %3.7f \t %3.7f \t\t %3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", iangle*180/M_PI, lat_l, lon_l, lat_i, lon_i, lat_l, lon_l);
 	
 	// DONE! The three approach waypoints (until switching to the compute function below) are stored in the class. setApproachPath() should copy those into the flight plan and execute the approach
 	

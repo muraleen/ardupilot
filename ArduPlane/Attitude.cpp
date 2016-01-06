@@ -409,10 +409,7 @@ void Plane::calc_throttle()
   calculate yaw control for coordinated flight
  */
 void Plane::calc_nav_yaw_coordinated(float speed_scaler)
-{
-    // Prepare for deepstall landing
-    deepstall_control->computeApproachPath(ahrs.wind_estimate(), 100, g.deepstall_ds, g.deepstall_vd, relative_altitude(), g.deepstall_vspeed, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
-    
+{    
     // Update deepstall parameters
     deepstall_control->setTarget(g.deepstall_lat, g.deepstall_lng);    
     deepstall_control->setYRCParams(g.deepstall_Kyr, g.deepstall_yrlimit, g.deepstall_Kp, g.deepstall_Ki, g.deepstall_Kd, g.deepstall_ilimit);
@@ -428,15 +425,35 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
     	        break;
     	    case 2: // Line tracking
     	        deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z,((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
+    	        break;
     	    case 3: // Complete approach and deep-stall procedure
     	        // This is the fun stuff
     	        deepstall_control->approachAndLand(ahrs.yaw, ahrs.get_gyro().z,((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
+    	        break;
+    	    case 4: // Emergency deepstall 1 - hold current heading
+                if (deepstall_hdg == -999) {
+                    deepstall_hdg = ahrs.yaw*180/M_PI;
+                }
+                deepstall_control->setTargetHeading(deepstall_hdg);
+                deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
+    	        break;
+    	    case 5: // Emergency deepstall 2 - stall head wind
+    	        if (deepstall_hdg = -999) {
+    	            atan2(-ahrs.wind_estimate().y, -ahrs.wind_estimate().x)*180/M_PI
+    	        }
+                deepstall_control->setTargetHeading(deepstall_hdg);
+                deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
+                break;
     	}
     	
         steering_control.rudder = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
 
     } else {
         deepstall_control->abort();
+        deepstall_hdg = -999;
+        
+        // Prepare for deepstall landing
+        deepstall_control->computeApproachPath(ahrs.wind_estimate(), 100, g.deepstall_ds, g.deepstall_vd, relative_altitude(), g.deepstall_vspeed, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
 
         bool disable_integrator = false;
         if (control_mode == STABILIZE && rudder_input != 0) {
