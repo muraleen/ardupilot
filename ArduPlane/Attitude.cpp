@@ -438,8 +438,8 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
                 deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
     	        break;
     	    case 5: // Emergency deepstall 2 - stall head wind
-    	        if (deepstall_hdg = -999) {
-    	            atan2(-ahrs.wind_estimate().y, -ahrs.wind_estimate().x)*180/M_PI
+    	        if (deepstall_hdg == -999) {
+    	            deepstall_hdg = atan2(-ahrs.wind_estimate().y, -ahrs.wind_estimate().x)*180/M_PI;
     	        }
                 deepstall_control->setTargetHeading(deepstall_hdg);
                 deepstall_control->compute(ahrs.yaw, ahrs.get_gyro().z, 0, 0);
