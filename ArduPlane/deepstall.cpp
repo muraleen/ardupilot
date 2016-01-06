@@ -76,7 +76,21 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	*/
 	
 	// ARC INTERSECTION AND INTERCEPT (active)
+	float iangle = atan2(lon_i-lon, lat_i-lat);
 	
+	if (PIDController::wrap(course - iangle, -M_PI, M_PI) < -45) {
+		// Left side of the arc
+		lat_l = lat_i + loiterRadius*cos(course + 5*M_PI/4)/59.71/1852;
+		lon_l = lon_i + loiterRadius*sin(course + 5*M_PI/4)/59.71/1852;
+	} else if (PIDController::wrap(course - iangle, -M_PI, M_PI) > 45) {
+		// Right side of the arc
+		lat_l = lat_i + loiterRadius*cos(course + 3*M_PI/4)/59.71/1852;
+		lon_l = lon_i + loiterRadius*sin(course + 3*M_PI/4)/59.71/1852;
+	} else {
+		// Intersects with the arc
+		lat_l = lat_i + loiterRadius*cos(iangle + M_PI)/59.71/1852;
+		lon_l = lon_i + loiterRadius*sin(iangle + M_PI)/59.71/1852;
+	}
 	
 	// hal.console->printf("%3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", lat_e, lon_e, lat_l, lon_l);
 	
