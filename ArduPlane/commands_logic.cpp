@@ -360,6 +360,8 @@ void Plane::do_nav_wp(const AP_Mission::Mission_Command& cmd)
 
 void Plane::do_land(const AP_Mission::Mission_Command& cmd)
 {
+    deepstall_control->abort();
+    
     auto_state.commanded_go_around = false;
     set_next_WP(cmd.content.location);
 

@@ -558,7 +558,6 @@ private:
 #endif
 
     DeepStall *deepstall_control;
-    float deepstall_hdg;
 
     // terrain handling
 #if AP_TERRAIN_AVAILABLE

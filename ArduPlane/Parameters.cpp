@@ -1004,7 +1004,6 @@ const AP_Param::Info Plane::var_info[] = {
 #endif
 
     GSCALAR(land_deepstall, "LAND_DEEPSTALL", 0),
-    GSCALAR(deepstall_hdg, "DEEPSTALL_HDG", 0),
     GSCALAR(deepstall_elev, "DEEPSTALL_ELEV", 1203),
     GSCALAR(deepstall_Kyr, "DEEPSTALL_KYR", 0.25),
     GSCALAR(deepstall_Kp, "DEEPSTALL_KP", 6),
@@ -1012,8 +1011,6 @@ const AP_Param::Info Plane::var_info[] = {
     GSCALAR(deepstall_Kd, "DEEPSTALL_KD", 8),
     GSCALAR(deepstall_ilimit, "DEEPSTALL_ILIM", 0.2),
     GSCALAR(deepstall_yrlimit, "DEEPSTALL_YLIM", 0.25),
-    GSCALAR(deepstall_lat, "DEEPSTALL_LAT", 0),
-    GSCALAR(deepstall_lng, "DEEPSTALL_LNG", 0),
 
     GSCALAR(deepstall_pKp, "DEEPSTALL_PKP", 0.02),
     GSCALAR(deepstall_pKi, "DEEPSTALL_PKI", 0),

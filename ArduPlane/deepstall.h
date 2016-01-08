@@ -4,6 +4,14 @@
 #include "pidcontroller.h"
 #include <stdint.h>
 #include <AP_Math/AP_Math.h>
+#include <AP_Common/AP_Common.h>
+
+enum STAGE {
+	FLY_TO_ARC,
+	COURSE_INTERCEPT,
+	DEEPSTALL_ENTRY,
+	DEEPSTALL_LAND
+};
 
 class DeepStall
 {
@@ -12,10 +20,9 @@ class DeepStall
 		void setTarget(float lat, float lon);
 		void setYRCParams(float _Kyr, float _yrLimit, float Kp, float Ki, float Kd, float ilim);
 		void setTPCParams(float Kp, float Ki, float Kd, float _ilim);
-		void compute(float track, float yawrate, float lat, float lon);
-		void approachAndLand(float track, float yawrate, float lat, float lon);
+		void land(float track, float yawrate, float lat, float lon);
+		bool getApproachWaypoint(Location &target, Location &land_loc, Location &current);
 		float getRudderNorm();
-		float getElevatorNorm();
 		
 		void computeApproachPath(Vector3f wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon);
 		
@@ -27,24 +34,19 @@ class DeepStall
 		
 		float targetTrack;
 		int stage; // 1 - arc point, 2 - course intercept, 3 - deep stall entry point, 4 - stall
+		bool ready;
 	
 	private:
 		float land_lat;
 		float land_lon;
 		float rCmd;
-		float eCmd;
 		float targetHeading;
 		float Kyr;
 		float yrLimit;
 		uint32_t _last_t;
 		
-		float tgt_lat;
-		float tgt_lon;
-		
 		// Approach parameters
 		float d_predict;
-		float v_e;
-		bool loiter_ccw;
 		// Deepstall entry point
 		float lat_e;
 		float lon_e;

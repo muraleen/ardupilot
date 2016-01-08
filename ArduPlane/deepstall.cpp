@@ -15,13 +15,11 @@ DeepStall::DeepStall() {
 	land_lon = 0;
 	Kyr = 0;
 	rCmd = 0;
-	eCmd = 0;
 	targetHeading = 0;
 	_last_t = 0;
-	v_e = 0;
 	d_predict = 0;
-	loiter_ccw = true;
-	stage = 1;
+	stage = FLY_TO_ARC;
+	ready = false;
 }
 
 void DeepStall::setTarget(float lat, float lon) {
@@ -50,7 +48,7 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	Vector3f wind(_wind.y, _wind.x, 0);
 	
 	// Compute effective groundspeed - can be negative, hence can handle backward tracking
-	v_e = (1/v_d)*(Vd * (Vd + wind)); // should essentially do dot(Vd,Vd+wind)/v_d
+	float v_e = (1/v_d)*(Vd * (Vd + wind)); // should essentially do dot(Vd,Vd+wind)/v_d
 	
 	// Predict deepstall distance (can handle backward tracking! xD)
 	d_predict = v_e*deltah/vspeed;
@@ -98,41 +96,46 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	
 }
 
-void DeepStall::approachAndLand(float track, float yawrate, float lat, float lon) {
+bool DeepStall::getApproachWaypoint(Location &target, Location &land_loc, Location &current) {
 	
-	if (stage < 4) { // Regular navigation
-		switch (stage) {
-			case 1: // Fly-to entry arc point (lat_l, lon_l)
-				tgt_lat = lat_l;
-				tgt_lon = lon_l;
-				break;
-			case 2: // Fly-to course intercept point (lat_i, lon_i)
-				tgt_lat = lat_i;
-				tgt_lon = lon_i;
-				break;
-			case 3: // Fly-to deepstall entry point (lat_e, lon_e)
-				tgt_lat = lat_e;
-				tgt_lon = lon_e;
-		}
-		
-		// Fly to the target waypoint
-		// FIXME
-		
-		if ((sqrt(pow(lat-land_lat,2) + pow(lon-land_lon,2)) <= d_predict + 5 && stage==3) || (sqrt(pow(lat-tgt_lat,2) + pow(lon-tgt_lon,2)) < 25 && stage<3)) {
-			stage++;
-		}
-	} else {
-		compute(track, yawrate, lat, lon);
+	float tgt_lat = 0, tgt_lon = 0;
+	
+	switch (stage) {
+		case FLY_TO_ARC: // Fly-to entry arc point (lat_l, lon_l)
+			tgt_lat = lat_l;
+			tgt_lon = lon_l;
+			break;
+		case COURSE_INTERCEPT: // Fly-to course intercept point (lat_i, lon_i)
+			tgt_lat = lat_i;
+			tgt_lon = lon_i;
+			break;
+		case DEEPSTALL_ENTRY: // Fly-to deepstall entry point (lat_e, lon_e)
+			tgt_lat = lat_e;
+			tgt_lon = lon_e;
+			break;
+		case DEEPSTALL_LAND: // Land
+			return false;
 	}
+	
+	target.lat = (int32_t) (tgt_lat * 1.0e7f);
+	target.lng = (int32_t) (tgt_lon * 1.0e7f);
+	
+	if ((get_distance(current, land_loc) <= d_predict + 5 && stage==DEEPSTALL_ENTRY) || (get_distance(current, target) < 25 && stage<DEEPSTALL_ENTRY)) {
+		stage++;
+		hal.console->printf("Deepstall stage: %d\n", stage);
+	}
+	
+	return true;
 }
 
 void DeepStall::abort() {
 	YawRateController->resetIntegrator();
     TargetPositionController->resetIntegrator();
-    stage = 1; // Reset deepstall stage in case of abort
+    stage = FLY_TO_ARC; // Reset deepstall stage in case of abort
+    ready = false;
 }
 
-void DeepStall::compute(float track, float yawrate, float lat, float lon) {
+void DeepStall::land(float track, float yawrate, float lat, float lon) {
 
 	uint32_t tnow = AP_HAL::millis();
 	uint32_t dt = tnow - _last_t;
@@ -180,16 +183,10 @@ void DeepStall::compute(float track, float yawrate, float lat, float lon) {
 	}
 	
 	rCmd = PIDController::saturate(YawRateController->run(((float) dt)/1000.0, PIDController::saturate(Kyr*PIDController::wrap(targetTrack - track, -M_PI, M_PI), -yrLimit, yrLimit)), -1, 1);
-	
-	eCmd = 1; // Full pitch up
 }
 
 float DeepStall::getRudderNorm() {
 	return rCmd;
-}
-
-float DeepStall::getElevatorNorm() {
-	return eCmd;
 }
 
 void DeepStall::setTargetHeading(float hdg) {

@@ -149,7 +149,6 @@ public:
         
         // 102: Deepstall landing mode
         k_param_land_deepstall,
-        k_param_deepstall_hdg,
         k_param_deepstall_elev,
 
         // 105: Extra parameters
@@ -343,9 +342,6 @@ public:
         k_param_pidTeThrottle, // unused
         k_param_pidNavPitchAltitude, // unused
         k_param_pidWheelSteer, // unused
-
-        k_param_deepstall_lat,
-        k_param_deepstall_lng,
         k_param_deepstall_pKp,
         k_param_deepstall_pKi,
         k_param_deepstall_pKd,
@@ -522,7 +518,6 @@ public:
     AP_Int16 gcs_pid_mask;
     AP_Int8 parachute_channel;
     AP_Int8 land_deepstall;
-    AP_Float deepstall_hdg;
     AP_Int16 deepstall_elev;
     AP_Float deepstall_Kyr;
     AP_Float deepstall_Kp;
@@ -530,9 +525,6 @@ public:
     AP_Float deepstall_Kd;
     AP_Float deepstall_ilimit;
     AP_Float deepstall_yrlimit;
-    
-    AP_Float deepstall_lat;
-    AP_Float deepstall_lng;
     
     AP_Float deepstall_pKp;
     AP_Float deepstall_pKi;

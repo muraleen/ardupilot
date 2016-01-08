@@ -12,117 +12,144 @@
  */
 bool Plane::verify_land()
 {
-    // we don't 'verify' landing in the sense that it never completes,
-    // so we don't verify command completion. Instead we use this to
-    // adjust final landing parameters
 
-    // If a go around has been commanded, we are done landing.  This will send
-    // the mission to the next mission item, which presumably is a mission
-    // segment with operations to perform when a landing is called off.
-    // If there are no commands after the land waypoint mission item then
-    // the plane will proceed to loiter about its home point.
-    if (auto_state.commanded_go_around) {
-        return true;
-    }
+    if (g.land_deepstall > 0) {
+    
+        if (!deepstall_control->ready) {
+            deepstall_control->setTarget(((float) next_WP_loc.lat)/1e7, ((float) next_WP_loc.lng)/1e7);
+            deepstall_control->setTargetHeading(atan2(-ahrs.wind_estimate().y, -ahrs.wind_estimate().x)*180/M_PI);
+            deepstall_control->computeApproachPath(ahrs.wind_estimate(), 100, g.deepstall_ds, g.deepstall_vd, relative_altitude(), g.deepstall_vspeed, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
+            deepstall_control->ready = true;
+        }
+    
+        // Set deepstall target and parameters
+        deepstall_control->setYRCParams(g.deepstall_Kyr, g.deepstall_yrlimit, g.deepstall_Kp, g.deepstall_Ki, g.deepstall_Kd, g.deepstall_ilimit);
+        deepstall_control->setTPCParams(g.deepstall_pKp, g.deepstall_pKi, g.deepstall_pKd, g.deepstall_pilimit);
+        
+        Location target {};
+        //memcpy(&target, next_WP_loc, sizeof(Location));
+        target.alt = next_WP_loc.alt;
+        
+        if (deepstall_control->getApproachWaypoint(target, next_WP_loc, current_loc)) {
+            nav_controller->update_waypoint(current_loc, target);
+        } else {
+            set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_FINAL);
+        }
+    
+    } else {
 
-    // when aborting a landing, mimic the verify_takeoff with steering hold. Once
-    // the altitude has been reached, restart the landing sequence
-    if (flight_stage == AP_SpdHgtControl::FLIGHT_LAND_ABORT) {
+        // we don't 'verify' landing in the sense that it never completes,
+        // so we don't verify command completion. Instead we use this to
+        // adjust final landing parameters
 
-        throttle_suppressed = false;
-        auto_state.land_complete = false;
-        nav_controller->update_heading_hold(get_bearing_cd(prev_WP_loc, next_WP_loc));
+        // If a go around has been commanded, we are done landing.  This will send
+        // the mission to the next mission item, which presumably is a mission
+        // segment with operations to perform when a landing is called off.
+        // If there are no commands after the land waypoint mission item then
+        // the plane will proceed to loiter about its home point.
+        if (auto_state.commanded_go_around) {
+            return true;
+        }
 
-        // see if we have reached abort altitude
-        if (adjusted_relative_altitude_cm() > auto_state.takeoff_altitude_rel_cm) {
-            next_WP_loc = current_loc;
-            mission.stop();
-            bool success = restart_landing_sequence();
-            mission.resume();
-            if (!success) {
-                // on a restart failure lets RTL or else the plane may fly away with nowhere to go!
-                set_mode(RTL);
+        // when aborting a landing, mimic the verify_takeoff with steering hold. Once
+        // the altitude has been reached, restart the landing sequence
+        if (flight_stage == AP_SpdHgtControl::FLIGHT_LAND_ABORT) {
+
+            throttle_suppressed = false;
+            auto_state.land_complete = false;
+            nav_controller->update_heading_hold(get_bearing_cd(prev_WP_loc, next_WP_loc));
+
+            // see if we have reached abort altitude
+            if (adjusted_relative_altitude_cm() > auto_state.takeoff_altitude_rel_cm) {
+                next_WP_loc = current_loc;
+                mission.stop();
+                bool success = restart_landing_sequence();
+                mission.resume();
+                if (!success) {
+                    // on a restart failure lets RTL or else the plane may fly away with nowhere to go!
+                    set_mode(RTL);
+                }
+                // make sure to return false so it leaves the mission index alone
             }
-            // make sure to return false so it leaves the mission index alone
+            return false;
         }
-        return false;
-    }
 
-    float height = height_above_target();
+        float height = height_above_target();
 
-    // use rangefinder to correct if possible
-    height -= rangefinder_correction();
+        // use rangefinder to correct if possible
+        height -= rangefinder_correction();
 
-    /* Set land_complete (which starts the flare) under 3 conditions:
-       1) we are within LAND_FLARE_ALT meters of the landing altitude
-       2) we are within LAND_FLARE_SEC of the landing point vertically
-          by the calculated sink rate (if LAND_FLARE_SEC != 0)
-       3) we have gone past the landing point and don't have
-          rangefinder data (to prevent us keeping throttle on 
-          after landing if we've had positive baro drift)
-    */
-#if RANGEFINDER_ENABLED == ENABLED
-    bool rangefinder_in_range = rangefinder_state.in_range;
-#else
-    bool rangefinder_in_range = false;
-#endif
-    if (height <= g.land_flare_alt ||
-        (aparm.land_flare_sec > 0 && height <= auto_state.sink_rate * aparm.land_flare_sec) ||
-        (!rangefinder_in_range && location_passed_point(current_loc, prev_WP_loc, next_WP_loc)) ||
-        (fabsf(auto_state.sink_rate) < 0.2f && !is_flying())) {
+        /* Set land_complete (which starts the flare) under 3 conditions:
+           1) we are within LAND_FLARE_ALT meters of the landing altitude
+           2) we are within LAND_FLARE_SEC of the landing point vertically
+              by the calculated sink rate (if LAND_FLARE_SEC != 0)
+           3) we have gone past the landing point and don't have
+              rangefinder data (to prevent us keeping throttle on 
+              after landing if we've had positive baro drift)
+        */
+    #if RANGEFINDER_ENABLED == ENABLED
+        bool rangefinder_in_range = rangefinder_state.in_range;
+    #else
+        bool rangefinder_in_range = false;
+    #endif
+        if (height <= g.land_flare_alt ||
+            (aparm.land_flare_sec > 0 && height <= auto_state.sink_rate * aparm.land_flare_sec) ||
+            (!rangefinder_in_range && location_passed_point(current_loc, prev_WP_loc, next_WP_loc)) ||
+            (fabsf(auto_state.sink_rate) < 0.2f && !is_flying())) {
 
-        if (!auto_state.land_complete) {
-            auto_state.post_landing_stats = true;
-            if (!is_flying() && (millis()-auto_state.last_flying_ms) > 3000) {
-                gcs_send_text_fmt(MAV_SEVERITY_CRITICAL, "Flare crash detected: speed=%.1f", (double)gps.ground_speed());
-            } else {
-                gcs_send_text_fmt(MAV_SEVERITY_INFO, "Flare %.1fm sink=%.2f speed=%.1f dist=%.1f",
-                                  (double)height, (double)auto_state.sink_rate,
-                                  (double)gps.ground_speed(),
-                                  (double)get_distance(current_loc, next_WP_loc));
+            if (!auto_state.land_complete) {
+                auto_state.post_landing_stats = true;
+                if (!is_flying() && (millis()-auto_state.last_flying_ms) > 3000) {
+                    gcs_send_text_fmt(MAV_SEVERITY_CRITICAL, "Flare crash detected: speed=%.1f", (double)gps.ground_speed());
+                } else {
+                    gcs_send_text_fmt(MAV_SEVERITY_INFO, "Flare %.1fm sink=%.2f speed=%.1f dist=%.1f",
+                                      (double)height, (double)auto_state.sink_rate,
+                                      (double)gps.ground_speed(),
+                                      (double)get_distance(current_loc, next_WP_loc));
+                }
+            }
+            auto_state.land_complete = true;
+
+            if (gps.ground_speed() < 3) {
+                // reload any airspeed or groundspeed parameters that may have
+                // been set for landing. We don't do this till ground
+                // speed drops below 3.0 m/s as otherwise we will change
+                // target speeds too early.
+                g.airspeed_cruise_cm.load();
+                g.min_gndspeed_cm.load();
+                aparm.throttle_cruise.load();
             }
         }
-        auto_state.land_complete = true;
 
-        if (gps.ground_speed() < 3) {
-            // reload any airspeed or groundspeed parameters that may have
-            // been set for landing. We don't do this till ground
-            // speed drops below 3.0 m/s as otherwise we will change
-            // target speeds too early.
-            g.airspeed_cruise_cm.load();
-            g.min_gndspeed_cm.load();
-            aparm.throttle_cruise.load();
+        /*
+          when landing we keep the L1 navigation waypoint 200m ahead. This
+          prevents sudden turns if we overshoot the landing point
+         */
+        struct Location land_WP_loc = next_WP_loc;
+	    int32_t land_bearing_cd = get_bearing_cd(prev_WP_loc, next_WP_loc);
+        location_update(land_WP_loc,
+                        land_bearing_cd*0.01f, 
+                        get_distance(prev_WP_loc, current_loc) + 200);
+        nav_controller->update_waypoint(prev_WP_loc, land_WP_loc);
+
+        // once landed and stationary, post some statistics
+        // this is done before disarm_if_autoland_complete() so that it happens on the next loop after the disarm
+        if (auto_state.post_landing_stats && !arming.is_armed()) {
+            auto_state.post_landing_stats = false;
+            gcs_send_text_fmt(MAV_SEVERITY_INFO, "Distance from LAND point=%.2fm", (double)get_distance(current_loc, next_WP_loc));
         }
+
+        // check if we should auto-disarm after a confirmed landing
+        disarm_if_autoland_complete();
+
+        /*
+          we return false as a landing mission item never completes
+
+          we stay on this waypoint unless the GCS commands us to change
+          mission item, reset the mission, command a go-around or finish
+          a land_abort procedure.
+         */        
     }
-
-    /*
-      when landing we keep the L1 navigation waypoint 200m ahead. This
-      prevents sudden turns if we overshoot the landing point
-     */
-    struct Location land_WP_loc = next_WP_loc;
-	int32_t land_bearing_cd = get_bearing_cd(prev_WP_loc, next_WP_loc);
-    location_update(land_WP_loc,
-                    land_bearing_cd*0.01f, 
-                    get_distance(prev_WP_loc, current_loc) + 200);
-    nav_controller->update_waypoint(prev_WP_loc, land_WP_loc);
-
-    // once landed and stationary, post some statistics
-    // this is done before disarm_if_autoland_complete() so that it happens on the next loop after the disarm
-    if (auto_state.post_landing_stats && !arming.is_armed()) {
-        auto_state.post_landing_stats = false;
-        gcs_send_text_fmt(MAV_SEVERITY_INFO, "Distance from LAND point=%.2fm", (double)get_distance(current_loc, next_WP_loc));
-    }
-
-    // check if we should auto-disarm after a confirmed landing
-    disarm_if_autoland_complete();
-
-    /*
-      we return false as a landing mission item never completes
-
-      we stay on this waypoint unless the GCS commands us to change
-      mission item, reset the mission, command a go-around or finish
-      a land_abort procedure.
-     */
     return false;
 }
 

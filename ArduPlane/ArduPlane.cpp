@@ -765,7 +765,7 @@ void Plane::set_flight_stage(AP_SpdHgtControl::FlightStage fs)
     if (fs == flight_stage) {
         return;
     }
-
+    
     switch (fs) {
     case AP_SpdHgtControl::FLIGHT_LAND_APPROACH:
         gcs_send_text_fmt(MAV_SEVERITY_INFO, "Landing approach start at %.1fm", (double)relative_altitude());
@@ -837,21 +837,22 @@ void Plane::update_flight_stage(void)
             if (auto_state.takeoff_complete == false) {
                 set_flight_stage(AP_SpdHgtControl::FLIGHT_TAKEOFF);
             } else if (mission.get_current_nav_cmd().id == MAV_CMD_NAV_LAND) {
-
-                if ((g.land_abort_throttle_enable && channel_throttle->control_in > 95) ||
-                        flight_stage == AP_SpdHgtControl::FLIGHT_LAND_ABORT){
-                    // abort mode is sticky, it must complete while executing NAV_LAND
-                    set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_ABORT);
-                } else if (auto_state.land_complete == true) {
-                    set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_FINAL);
-                } else if (flight_stage != AP_SpdHgtControl::FLIGHT_LAND_APPROACH) {
-                    float path_progress = location_path_proportion(current_loc, prev_WP_loc, next_WP_loc);
-                    bool lined_up = abs(nav_controller->bearing_error_cd()) < 1000;
-                    bool below_prev_WP = current_loc.alt < prev_WP_loc.alt;
-                    if ((path_progress > 0.15f && lined_up && below_prev_WP) || path_progress > 0.5f) {
-                        set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_APPROACH);
-                    } else {
-                        set_flight_stage(AP_SpdHgtControl::FLIGHT_NORMAL);                        
+                if (g.land_deepstall == 0) {
+                    if ((g.land_abort_throttle_enable && channel_throttle->control_in > 95) ||
+                            flight_stage == AP_SpdHgtControl::FLIGHT_LAND_ABORT){
+                        // abort mode is sticky, it must complete while executing NAV_LAND
+                        set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_ABORT);
+                    } else if (auto_state.land_complete == true) {
+                        set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_FINAL);
+                    } else if (flight_stage != AP_SpdHgtControl::FLIGHT_LAND_APPROACH) {
+                        float path_progress = location_path_proportion(current_loc, prev_WP_loc, next_WP_loc);
+                        bool lined_up = abs(nav_controller->bearing_error_cd()) < 1000;
+                        bool below_prev_WP = current_loc.alt < prev_WP_loc.alt;
+                        if ((path_progress > 0.15f && lined_up && below_prev_WP) || path_progress > 0.5f) {
+                            set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_APPROACH);
+                        } else {
+                            set_flight_stage(AP_SpdHgtControl::FLIGHT_NORMAL);                        
+                        }
                     }
                 }
 
