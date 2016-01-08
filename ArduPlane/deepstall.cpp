@@ -90,6 +90,11 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 		lon_l = lon_i + loiterRadius*sin(iangle + M_PI)/59.71/1852;
 	}
 	
+	hal.console->printf("Stage0: %3.8f %3.8f\n", lat_l, lon_l);
+	hal.console->printf("Stage1: %3.8f %3.8f\n", lat_i, lon_i);
+	hal.console->printf("Stage2: %3.8f %3.8f\n", lat_e, lon_e);
+	hal.console->printf("Wind Heading: %3.0f\n\n", targetHeading);
+	
 	// hal.console->printf("%3.2f \t %3.7f \t %3.7f \t\t %3.7f \t %3.7f \t\t %3.7f \t %3.7f \n", iangle*180/M_PI, lat_l, lon_l, lat_i, lon_i, lat_l, lon_l);
 	
 	// DONE! The three approach waypoints (until switching to the compute function below) are stored in the class. setApproachPath() should copy those into the flight plan and execute the approach

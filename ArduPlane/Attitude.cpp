@@ -412,7 +412,7 @@ void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 {
     if (g.land_deepstall > 0 && control_mode == AUTO && flight_stage == AP_SpdHgtControl::FLIGHT_LAND_FINAL) {
         deepstall_control->land(ahrs.yaw, ahrs.get_gyro().z, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
-        hal.console->printf("Rudder: %.2f\n", deepstall_control->getRudderNorm());
+        // hal.console->printf("Rudder: %.2f\n", deepstall_control->getRudderNorm());
         steering_control.rudder = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
     } else {
         bool disable_integrator = false;
