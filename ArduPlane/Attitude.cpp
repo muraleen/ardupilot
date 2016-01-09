@@ -410,22 +410,16 @@ void Plane::calc_throttle()
  */
 void Plane::calc_nav_yaw_coordinated(float speed_scaler)
 {
-    if (g.land_deepstall > 0 && control_mode == AUTO && flight_stage == AP_SpdHgtControl::FLIGHT_LAND_FINAL) {
-        deepstall_control->land(ahrs.yaw, ahrs.get_gyro().z, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
-        // hal.console->printf("Rudder: %.2f\n", deepstall_control->getRudderNorm());
-        steering_control.rudder = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
-    } else {
-        bool disable_integrator = false;
-        if (control_mode == STABILIZE && rudder_input != 0) {
-            disable_integrator = true;
-        }
-        steering_control.rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
-
-        // add in rudder mixing from roll
-        steering_control.rudder += channel_roll->servo_out * g.kff_rudder_mix;
-        steering_control.rudder += rudder_input;
-        steering_control.rudder = constrain_int16(steering_control.rudder, -4500, 4500);
+    bool disable_integrator = false;
+    if (control_mode == STABILIZE && rudder_input != 0) {
+        disable_integrator = true;
     }
+    steering_control.rudder = yawController.get_servo_out(speed_scaler, disable_integrator);
+
+    // add in rudder mixing from roll
+    steering_control.rudder += channel_roll->servo_out * g.kff_rudder_mix;
+    steering_control.rudder += rudder_input;
+    steering_control.rudder = constrain_int16(steering_control.rudder, -4500, 4500);
 }
 
 /*
@@ -874,6 +868,9 @@ void Plane::set_servos(void)
             if (g.land_deepstall > 0 && control_mode == AUTO && flight_stage == AP_SpdHgtControl::FLIGHT_LAND_FINAL) {
                 //hal.console->printf("forcing elev: %d\n", (int32_t)g.deepstall_elev);
                 channel_pitch->radio_out = g.deepstall_elev;
+                deepstall_control->land(ahrs.yaw, ahrs.get_gyro().z, ((float) current_loc.lat)/1e7, ((float) current_loc.lng)/1e7);
+                // hal.console->printf("Rudder: %.2f\n", deepstall_control->getRudderNorm());
+                channel_rudder->servo_out = constrain_int16(deepstall_control->getRudderNorm()*4500, -4500, 4500);
             } else {
                 channel_pitch->calc_pwm();
             }
