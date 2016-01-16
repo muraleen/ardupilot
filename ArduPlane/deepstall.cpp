@@ -101,7 +101,19 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 	
 }
 
-bool DeepStall::getApproachWaypoint(Location &target, Location &land_loc, Location &current) {
+bool DeepStall::getApproachWaypoint(Location &target, Location &land_loc, Location &current, Vector3f _wind, float v_d, float deltah, float vspeed) {
+	
+	float course = targetHeading*M_PI/180;
+	
+	// Generate v_d and wind vectors
+	Vector3f Vd(v_d*sin(course), v_d*cos(course), 0);
+	Vector3f wind(_wind.y, _wind.x, 0);
+	
+	// Compute effective groundspeed - can be negative, hence can handle backward tracking
+	float v_e = (1/v_d)*(Vd * (Vd + wind)); // should essentially do dot(Vd,Vd+wind)/v_d
+	
+	// Predict deepstall distance (can handle backward tracking! xD)
+	d_predict = v_e*deltah/vspeed;
 	
 	float tgt_lat = 0, tgt_lon = 0;
 	

@@ -21,7 +21,7 @@ class DeepStall
 		void setYRCParams(float _Kyr, float _yrLimit, float Kp, float Ki, float Kd, float ilim);
 		void setTPCParams(float Kp, float Ki, float Kd, float _ilim);
 		void land(float track, float yawrate, float lat, float lon);
-		bool getApproachWaypoint(Location &target, Location &land_loc, Location &current);
+		bool getApproachWaypoint(Location &target, Location &land_loc, Location &current, Vector3f _wind, float v_d, float deltah, float vspeed);
 		float getRudderNorm();
 		
 		void computeApproachPath(Vector3f wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon);

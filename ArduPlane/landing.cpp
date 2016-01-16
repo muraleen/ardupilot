@@ -30,7 +30,7 @@ bool Plane::verify_land()
         //memcpy(&target, next_WP_loc, sizeof(Location));
         target.alt = next_WP_loc.alt;
         
-        if (deepstall_control->getApproachWaypoint(target, next_WP_loc, current_loc)) {
+        if (deepstall_control->getApproachWaypoint(target, next_WP_loc, current_loc, ahrs.wind_estimate(), g.deepstall_vd, relative_altitude(), g.deepstall_vspeed)) {
             nav_controller->update_waypoint(current_loc, target);
         } else {
             set_flight_stage(AP_SpdHgtControl::FLIGHT_LAND_FINAL);
