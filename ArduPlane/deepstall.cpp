@@ -150,7 +150,8 @@ bool DeepStall::getApproachWaypoint(Location &target, Location &land_loc, Locati
 			stage++;
 			hal.console->printf("Deepstall stage: %d\n", stage);
 			if (stage == COURSE_INTERCEPT) {
-				setTargetHeading(atan2(-_wind.y, -_wind.x)*180/M_PI);
+				float new_wind = atan2(-_wind.y, -_wind.x)*180/M_PI;
+				setTargetHeading(targetHeading + PIDController::saturate(PIDController::wrap(new_wind - targetHeading,-180,180),-30,30));
 				computeApproachPath(_wind, lradius, ds, v_d, deltah, vspeed, ((float) current.lat)/1e7, ((float) current.lng)/1e7);
 			}
 		}
