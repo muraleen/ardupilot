@@ -18,6 +18,8 @@ DeepStall::DeepStall() {
 	targetHeading = 0;
 	_last_t = 0;
 	d_predict = 0;
+	lradius = 100;
+	ds = 100;
 	stage = FLY_TO_ARC;
 	ready = false;
 }
@@ -40,6 +42,9 @@ void DeepStall::setTPCParams(float Kp, float Ki, float Kd, float _ilim) {
 }
 
 void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_s, float v_d, float deltah, float vspeed, float lat, float lon) {
+
+	lradius = loiterRadius;
+	ds = d_s;
 
 	float course = targetHeading*M_PI/180;
 
@@ -103,44 +108,57 @@ void DeepStall::computeApproachPath(Vector3f _wind, float loiterRadius, float d_
 
 bool DeepStall::getApproachWaypoint(Location &target, Location &land_loc, Location &current, Vector3f _wind, float v_d, float deltah, float vspeed) {
 	
-	float course = targetHeading*M_PI/180;
-	
-	// Generate v_d and wind vectors
-	Vector3f Vd(v_d*sin(course), v_d*cos(course), 0);
-	Vector3f wind(_wind.y, _wind.x, 0);
-	
-	// Compute effective groundspeed - can be negative, hence can handle backward tracking
-	float v_e = (1/v_d)*(Vd * (Vd + wind)); // should essentially do dot(Vd,Vd+wind)/v_d
-	
-	// Predict deepstall distance (can handle backward tracking! xD)
-	d_predict = v_e*deltah/vspeed;
-	
 	float tgt_lat = 0, tgt_lon = 0;
 	
-	switch (stage) {
-		case FLY_TO_ARC: // Fly-to entry arc point (lat_l, lon_l)
-			tgt_lat = lat_l;
-			tgt_lon = lon_l;
-			break;
-		case COURSE_INTERCEPT: // Fly-to course intercept point (lat_i, lon_i)
-			tgt_lat = lat_i;
-			tgt_lon = lon_i;
-			break;
-		case DEEPSTALL_ENTRY: // Fly-to deepstall entry point (lat_e, lon_e)
-			tgt_lat = lat_e;
-			tgt_lon = lon_e;
-			break;
-		case DEEPSTALL_LAND: // Land
-			return false;
+	if (get_distance(current, land_loc) > 500) {
+		
+		tgt_lat = land_lat;
+		tgt_lon = land_lon;
+		
+	} else {
+	
+		float course = targetHeading*M_PI/180;
+	
+		// Generate v_d and wind vectors
+		Vector3f Vd(v_d*sin(course), v_d*cos(course), 0);
+		Vector3f wind(_wind.y, _wind.x, 0);
+	
+		// Compute effective groundspeed - can be negative, hence can handle backward tracking
+		float v_e = (1/v_d)*(Vd * (Vd + wind)); // should essentially do dot(Vd,Vd+wind)/v_d
+	
+		// Predict deepstall distance (can handle backward tracking! xD)
+		d_predict = v_e*deltah/vspeed;
+	
+		switch (stage) {
+			case FLY_TO_ARC: // Fly-to entry arc point (lat_l, lon_l)
+				tgt_lat = lat_l;
+				tgt_lon = lon_l;
+				break;
+			case COURSE_INTERCEPT: // Fly-to course intercept point (lat_i, lon_i)
+				tgt_lat = lat_i;
+				tgt_lon = lon_i;
+				break;
+			case DEEPSTALL_ENTRY: // Fly-to deepstall entry point (lat_e, lon_e)
+				tgt_lat = lat_e;
+				tgt_lon = lon_e;
+				break;
+			case DEEPSTALL_LAND: // Land
+				return false;
+		}
+	
+		if ((get_distance(current, land_loc) <= d_predict + 5 && stage==DEEPSTALL_ENTRY) || (get_distance(current, target) < 25 && stage<DEEPSTALL_ENTRY)) {
+			stage++;
+			hal.console->printf("Deepstall stage: %d\n", stage);
+			if (stage == COURSE_INTERCEPT) {
+				setTargetHeading(atan2(-_wind.y, -_wind.x)*180/M_PI);
+				computeApproachPath(_wind, lradius, ds, v_d, deltah, vspeed, ((float) current.lat)/1e7, ((float) current.lng)/1e7);
+			}
+		}
+		
 	}
 	
 	target.lat = (int32_t) (tgt_lat * 1.0e7f);
 	target.lng = (int32_t) (tgt_lon * 1.0e7f);
-	
-	if ((get_distance(current, land_loc) <= d_predict + 5 && stage==DEEPSTALL_ENTRY) || (get_distance(current, target) < 25 && stage<DEEPSTALL_ENTRY)) {
-		stage++;
-		hal.console->printf("Deepstall stage: %d\n", stage);
-	}
 	
 	return true;
 }

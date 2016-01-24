@@ -41,6 +41,8 @@ class DeepStall
 		float land_lon;
 		float rCmd;
 		float targetHeading;
+		float lradius;
+		float ds;
 		float Kyr;
 		float yrLimit;
 		uint32_t _last_t;
